@@ -1,6 +1,6 @@
 # Endpoint details
 
-Normative behaviour per method. Encodings, block tags, error codes, address kinds and balance kinds are defined in [README.md](README.md). The one-line overview is [README §4](README.md#4-endpoints).
+Normative behaviour per method. Encodings, block tags, error codes, address kinds and balance kinds are defined in [README.md](README.md). The one-line overview is the [endpoint table in the README](README.md#4-endpoints).
 
 Every method takes positional parameters unless a method defines a single object parameter. Wrong arity is `-32602`.
 
@@ -183,10 +183,10 @@ Every method here accepts an optional block tag as its last parameter, validates
 
   | Kind | `balanceOf` | `totalSupply` | `decimals`, `symbol`, `name` |
   |---|---|---|---|
-  | `contract` | The holder's balance in the contract's ledger state, obtained by running the contract's read circuit locally against the state from `contractAction(address).state`, or by decoding the ledger field with the compiled module's `ledger(state)` accessor. The holder argument is translated per [README §2](README.md#2-addresses). When a block tag names a height within the indexer's retention window, the state at that block is used. | From the ledger state | Token manifest |
+  | `contract` | The holder's balance in the contract's ledger state, obtained by running the contract's read circuit locally against the state from `contractAction(address).state`, or by decoding the ledger field with the compiled module's `ledger(state)` accessor. The holder argument is translated per [Addresses](README.md#2-addresses). When a block tag names a height within the indexer's retention window, the state at that block is used. | From the ledger state | Token manifest |
   | `token-unshielded` | Sum of the holder's unspent UTXOs of that color in the UTXO balance store | Store-wide sum for the color | Token manifest |
-  | `token-shielded` | `0x` on the shared surface; a real value only on a per-user session surface (README §3) | `0x` | Token manifest |
-  | `protocol` (DUST) | The account's DUST at the time of the call: generated capacity minus reported spends (README §3) | `0x` | `decimals` = 15; `symbol` = `DUST` |
+  | `token-shielded` | `0x` on the shared surface; a real value only on a per-user session surface ([Balance kinds](README.md#3-balance-kinds)) | `0x` | Token manifest |
+  | `protocol` (DUST) | The account's DUST at the time of the call: generated capacity minus reported spends ([Balance kinds](README.md#3-balance-kinds)) | `0x` | `decimals` = 15; `symbol` = `DUST` |
 
   Any other target, selector, or calldata shorter than four bytes returns `0x`.
 - **Errors** `-32602` for wrong arity, a non-object call, or a malformed address. A well-formed call the surface cannot execute is `0x`, never an error.
@@ -253,7 +253,7 @@ Mapping rules:
 
 - An unshielded Spend paired with an unshielded Receive in the same transaction, with equal domain separator, token type and amount, becomes one `Transfer(address indexed from, address indexed to, uint256 value)`. Pairing is FIFO by event id within the transaction.
 - An unpaired Spend is a burn: `Transfer(from = sender, to = 0x0)`. An unpaired Receive is a mint: `Transfer(from = 0x0, to = recipient)`.
-- The log's `address` is the asset's EVM address per README §2: the contract for ledger-managed balances, the color address for UTXO-based tokens.
+- The log's `address` is the asset's EVM address per [Addresses](README.md#2-addresses): the contract for ledger-managed balances, the color address for UTXO-based tokens.
 - `topic1` and `topic2` are the 20-byte addresses left-padded to 32 bytes. For ERC-721 profiles `topic3` is the token id and `data` is empty; for ERC-20 profiles `data` is the amount as a `uint256` word.
 - Every other event type keeps a lossless topic `keccak256("Midnight<TypeName>()")` with its fields as 32-byte words in `data`.
 - `logIndex` is the 0-based position within the transaction; `removed` is always `false`.

@@ -2,7 +2,7 @@
 
 **Status:** Draft · 2026-09-08
 
-A JSON-RPC 2.0 surface that lets Ethereum wallets and tooling read Midnight. Writes are not interpreted here: `eth_sendRawTransaction` forwards its payload unchanged to a configured relayer whose behaviour is outside this specification. This repository is a specification, not an implementation. Any system that serves the methods listed in §4 with the behaviour defined in [ENDPOINTS-DETAILS.md](ENDPOINTS-DETAILS.md) conforms.
+A JSON-RPC 2.0 surface that lets Ethereum wallets and tooling read Midnight. Writes are not interpreted here: `eth_sendRawTransaction` forwards its payload unchanged to a configured relayer whose behaviour is outside this specification. This repository is a specification, not an implementation. Any system that serves the methods listed in [Endpoints](#4-endpoints) with the behaviour defined in [ENDPOINTS-DETAILS.md](ENDPOINTS-DETAILS.md) conforms.
 
 The surface is not an Ethereum node. There is no EVM execution, no storage trie and no mempool. Every result is derived from the Midnight indexer, from stores the implementation maintains, from configuration, or from a relayer. Behaviour not described here is out of scope.
 
@@ -25,7 +25,7 @@ The surface is not an Ethereum node. There is no EVM execution, no storage trie 
 | **Midnight hex** | Midnight values are unprefixed hex; this surface adds the `0x` prefix. |
 | **Surfaces** | HTTP on port 8545 and WebSocket on port 10021. Both serve every method; WebSocket additionally serves `eth_subscribe` and `eth_unsubscribe`. Both apply the same [envelope rules](ENDPOINTS-DETAILS.md#transport-and-envelope). |
 | **Error codes** | `-32700` parse · `-32600` invalid request · `-32601` unknown method · `-32602` invalid params · `-32603` internal · `-32004` method known and not served, with `data` · `-32005` limit exceeded. Deliberate errors carry one of these codes; anything else is sanitized to `-32603`. |
-| **Stores** | The implementation maintains four stores: the **registry** of EVM addresses (§2), the **UTXO balance store** of unspent unshielded value per identity and token type, the **transaction index** of transactions with mapped sender and recipient, and the **log store** of EVM-shaped logs derived from contract events. |
+| **Stores** | The implementation maintains four stores: the **registry** of EVM addresses ([Addresses](#2-addresses)), the **UTXO balance store** of unspent unshielded value per identity and token type, the **transaction index** of transactions with mapped sender and recipient, and the **log store** of EVM-shaped logs derived from contract events. |
 | **Token manifest** | Configuration listing every token the surface serves: address kind, symbol, name, decimals and, for contract tokens, the compiled contract module. It is the single metadata source for `eth_call`, `midnight_getTokenBalances` and the log store. |
 
 ## 2. Addresses
@@ -59,7 +59,7 @@ Six kinds of value exist on Midnight and they are read from different places. Th
 
 ## 4. Endpoints
 
-One row per method. **Result** is the JSON-RPC result type, using the encodings in §1. **Midnight data** names what the value is built from, in the vocabulary of §1–§3, without the reasoning. Each method links to its section in [ENDPOINTS-DETAILS.md](ENDPOINTS-DETAILS.md), which defines parameters, behaviour and errors, plus the [transport and envelope rules](ENDPOINTS-DETAILS.md#transport-and-envelope) and the [conformance checks](ENDPOINTS-DETAILS.md#conformance-checks).
+One row per method. **Result** is the JSON-RPC result type, using the encodings in [Conventions](#1-conventions). **Midnight data** names what the value is built from, in the vocabulary of [Conventions](#1-conventions), [Addresses](#2-addresses) and [Balance kinds](#3-balance-kinds), without the reasoning. Each method links to its section in [ENDPOINTS-DETAILS.md](ENDPOINTS-DETAILS.md), which defines parameters, behaviour and errors, plus the [transport and envelope rules](ENDPOINTS-DETAILS.md#transport-and-envelope) and the [conformance checks](ENDPOINTS-DETAILS.md#conformance-checks).
 
 29 methods are served on both HTTP and WebSocket, plus 2 subscription methods on WebSocket only. 21 further spec-defined methods answer `-32004` ([methods not served](ENDPOINTS-DETAILS.md#methods-not-served)). Any other name answers `-32601`.
 
