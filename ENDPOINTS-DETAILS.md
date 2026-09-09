@@ -148,7 +148,7 @@ Every method here accepts an optional block tag as its last parameter, validates
 
 - **Parameters** 1–2 positional: 20-byte address, optional block tag.
 - **Result** QUANTITY.
-- **Behaviour** The address's unshielded NIGHT in STAR × 10^12. For kinds `midnight` and `ethereum` the value is the sum of unspent NIGHT UTXOs of the bound identity in the UTXO balance store. For kind `contract` it is the NIGHT entry of the contract's latest action's unshielded balances. An address without a registry entry, or of a token or protocol kind, answers `0x0`.
+- **Behaviour** The address's unshielded NIGHT in STAR × 10^12. For kinds `midnight` and `ethereum` the value is the sum of unspent NIGHT UTXOs of the bound identity in unshielded balances. For kind `contract` it is the NIGHT entry of the contract's latest action's unshielded balances. An address without a registry entry, or of a token or protocol kind, answers `0x0`.
 - **Wallet use** The account headline in the wallet.
 
 ### eth_getTransactionCount
@@ -184,7 +184,7 @@ Every method here accepts an optional block tag as its last parameter, validates
   | Kind | `balanceOf` | `totalSupply` | `decimals`, `symbol`, `name` |
   |---|---|---|---|
   | `contract` | The holder's balance in the contract's ledger state, obtained by running the contract's read circuit locally against the state from `contractAction(address).state`, or by decoding the ledger field with the compiled module's `ledger(state)` accessor. The holder argument is translated per [Addresses](README.md#2-addresses). When a block tag names a height within the indexer's retention window, the state at that block is used. | From the ledger state | Token manifest |
-  | `token-unshielded` | Sum of the holder's unspent UTXOs of that color in the UTXO balance store | Store-wide sum for the color | Token manifest |
+  | `token-unshielded` | Sum of the holder's unspent UTXOs of that color in unshielded balances | Sum over all holders of the color | Token manifest |
   | `token-shielded` | `0x` on the shared surface; a real value only on a per-user session surface ([Balance kinds](README.md#3-balance-kinds)) | `0x` | Token manifest |
   | `protocol` (DUST) | The account's DUST at the time of the call: generated capacity minus reported spends ([Balance kinds](README.md#3-balance-kinds)) | `0x` | `decimals` = 15; `symbol` = `DUST` |
 
@@ -227,7 +227,7 @@ A transaction that entered through `eth_sendRawTransaction` has two identities: 
   | `contractAddress` | `null` |
   | `type` | `0x0` |
   | `effectiveGasPrice` | `0x3b9aca00` |
-  | `logs` | the transaction's rows from the log store, identical objects to `eth_getLogs`, joined on the Midnight hash |
+  | `logs` | the transaction's derived logs, identical objects to `eth_getLogs`, joined on the Midnight hash |
   | `logsBloom` | computed from `logs` |
 
   For a transaction that entered through `eth_sendRawTransaction`, `transactionHash` is the hash the relayer returned and `logs[].transactionHash` the Midnight hash. This difference is by design.
@@ -247,7 +247,7 @@ A transaction that entered through `eth_sendRawTransaction` has two identities: 
 
 ## Logs and subscriptions
 
-Logs are derived from the indexer's contract events and held in the log store; no log read depends on the indexer being reachable.
+Logs are derived from the indexer's contract events and kept as derived logs; no log read depends on the indexer being reachable.
 
 Mapping rules:
 
