@@ -1,6 +1,6 @@
 # Endpoint details
 
-Normative behaviour per method. Encodings, block tags, error codes, address kinds and balance kinds are defined in [README.md](README.md). The one-line overview is [ENDPOINTS.md](ENDPOINTS.md).
+Normative behaviour per method. Encodings, block tags, error codes, address kinds and balance kinds are defined in [README.md](README.md). The one-line overview is [README §4](README.md#4-endpoints).
 
 Every method takes positional parameters unless a method defines a single object parameter. Wrong arity is `-32602`.
 
