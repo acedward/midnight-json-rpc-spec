@@ -45,7 +45,7 @@ All methods in this group take no parameters; any parameter is `-32602`.
 
 ## Fees and gas
 
-Midnight fees are paid in DUST by the relayer. These answers exist so wallets can build a transaction; none of them measures anything, and together they keep wallets on legacy type-0 transactions.
+Fees are paid by the relayer in DUST. The values below are constants that let wallets build a legacy type-0 transaction.
 
 ### eth_gasPrice
 
@@ -79,7 +79,7 @@ Midnight fees are paid in DUST by the relayer. These answers exist so wallets ca
 
 - **Parameters** 1 positional: DATA of any even length.
 - **Result** DATA, 32 bytes.
-- **Behaviour** Ethereum Keccak-256 (the `0x01` padding domain, not FIPS SHA3-256) of the input bytes. `0x` hashes the empty string.
+- **Behaviour** Keccak-256 of the input bytes. `0x` hashes the empty string.
 
 ## Blocks
 
@@ -228,7 +228,7 @@ A relayed transaction has two identities: the eth-side hash the wallet computed 
   | `type` | `0x0` |
   | `effectiveGasPrice` | `0x3b9aca00` |
   | `logs` | the transaction's rows from the log store, identical objects to `eth_getLogs`, joined on the Midnight hash |
-  | `logsBloom` | computed from `logs` (Bloom-9, three 11-bit positions per address and topic) |
+  | `logsBloom` | computed from `logs` |
 
   For a relayed transaction `transactionHash` is the eth-side hash and `logs[].transactionHash` the Midnight hash. This difference is by design.
 - **Wallet use** Confirmation and token-transfer detection.
