@@ -1,6 +1,16 @@
 # Midnight EVM JSON-RPC Specification
 
-**Status:** Draft · 2026-09-08
+**Status:** Draft · 2026-09-09
+
+> ## IMPORTANT
+>
+> This specification is a working draft pending one decision: how EVM accounts are bound to, or used on, Midnight.
+>
+> - **(a) Account abstraction** through a standard Compact contract interface. The EVM account acts only through contracts keyed by its identity.
+> - **(b) Account binding.** The EVM key and the Midnight key cross-sign a message that links the two accounts.
+> - **(c) Other or mixed.**
+>
+> The decision determines which endpoints, which derived data and which balance kinds this surface has to carry. The current implementation leans towards **(a)**; its downside is that an EVM account can never hold native coins.
 
 A JSON-RPC 2.0 surface that lets Ethereum wallets and tooling read Midnight. Writes are not interpreted here: `eth_sendRawTransaction` forwards its payload unchanged to a configured relayer whose behaviour is outside this specification. This repository is a specification, not an implementation. Any system that serves the methods listed in [Endpoints](#4-endpoints) with the behaviour defined in [ENDPOINTS-DETAILS.md](ENDPOINTS-DETAILS.md) conforms.
 
