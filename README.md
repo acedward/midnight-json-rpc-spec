@@ -2,7 +2,7 @@
 
 **Status:** Draft · 2026-09-08
 
-A JSON-RPC 2.0 surface that lets Ethereum wallets and tooling read Midnight and submit signed transactions to it. This repository is a specification, not an implementation. Any system that serves the methods listed in §4 with the behaviour defined in [ENDPOINTS-DETAILS.md](ENDPOINTS-DETAILS.md) conforms.
+A JSON-RPC 2.0 surface that lets Ethereum wallets and tooling read Midnight. Writes are not interpreted here: `eth_sendRawTransaction` forwards its payload unchanged to a configured relayer whose behaviour is outside this specification. This repository is a specification, not an implementation. Any system that serves the methods listed in §4 with the behaviour defined in [ENDPOINTS-DETAILS.md](ENDPOINTS-DETAILS.md) conforms.
 
 The surface is not an Ethereum node. There is no EVM execution, no storage trie and no mempool. Every result is derived from the Midnight indexer, from stores the implementation maintains, from configuration, or from a relayer. Behaviour not described here is out of scope.
 
@@ -125,7 +125,7 @@ One row per method. **Result** is the JSON-RPC result type, using the encodings 
 
 | Endpoint | Result | Midnight data |
 |---|---|---|
-| [`eth_sendRawTransaction`](ENDPOINTS-DETAILS.md#eth_sendrawtransaction) | DATA, 32 bytes | Relayer's eth-side hash for the forwarded raw transaction |
+| [`eth_sendRawTransaction`](ENDPOINTS-DETAILS.md#eth_sendrawtransaction) | DATA, 32 bytes | The 32-byte hash the configured relayer returns for the forwarded payload |
 | [`midnight_getTokenBalances`](ENDPOINTS-DETAILS.md#midnight_gettokenbalances) | `{ address, tokenBalances[], pageKey? }` | UTXO balance store, contract ledger state, dust generation data; metadata from the token manifest |
 | [`rpc.discover`](ENDPOINTS-DETAILS.md#rpcdiscover) | OpenRPC document | Configuration |
 

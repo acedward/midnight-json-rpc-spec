@@ -45,7 +45,7 @@ All methods in this group take no parameters; any parameter is `-32602`.
 
 ## Fees and gas
 
-Fees are paid by the relayer in DUST. The values below are constants that let wallets build a legacy type-0 transaction.
+The values below are constants. This surface charges no fees.
 
 ### eth_gasPrice
 
@@ -205,14 +205,14 @@ Transactions are synthesized into the Ethereum shape from what Midnight records.
 | `type` | `0x0` |
 | `v`, `r`, `s` | `0x0`, zero hash, zero hash |
 
-A relayed transaction has two identities: the eth-side hash the wallet computed and polls with, and the Midnight hash the chain knows it by. Every method echoes the identifier it was queried by and positions the transaction by the Midnight hash.
+A transaction that entered through `eth_sendRawTransaction` has two identities: the hash the relayer returned, which the wallet polls with, and the Midnight hash the chain knows it by. The relayer records the pair in the transaction index; that mapping is the only thing this specification requires of it. Every method echoes the identifier it was queried by and positions the transaction by the Midnight hash.
 
 ### eth_getTransactionByHash
 
 - **Parameters** 1 positional: 32-byte transaction hash.
 - **Result** Transaction or `null`.
 - **Behaviour** Transaction index first, indexer second. `from` and `to` are the mapped 20-byte addresses when the index has them, else the zero address; `nonce` is the count of the sender's earlier indexed transactions. `blockHash`, `blockNumber` and `transactionIndex` come from the block that contains the Midnight hash. A hash neither source can place is `null`, never an error.
-- **Wallet use** Wallets poll this with the eth-side hash after a send.
+- **Wallet use** Wallets poll this with the hash `eth_sendRawTransaction` returned.
 
 ### eth_getTransactionReceipt
 
@@ -230,7 +230,7 @@ A relayed transaction has two identities: the eth-side hash the wallet computed 
   | `logs` | the transaction's rows from the log store, identical objects to `eth_getLogs`, joined on the Midnight hash |
   | `logsBloom` | computed from `logs` |
 
-  For a relayed transaction `transactionHash` is the eth-side hash and `logs[].transactionHash` the Midnight hash. This difference is by design.
+  For a transaction that entered through `eth_sendRawTransaction`, `transactionHash` is the hash the relayer returned and `logs[].transactionHash` the Midnight hash. This difference is by design.
 - **Wallet use** Confirmation and token-transfer detection.
 
 ### eth_getTransactionByBlockHashAndIndex
@@ -294,11 +294,11 @@ WebSocket surface only.
 
 ### eth_sendRawTransaction
 
-- **Parameters** 1 positional: the signed raw transaction as DATA.
+- **Parameters** 1 positional: the payload as DATA.
 - **Result** DATA, 32 bytes.
-- **Behaviour** The bytes are forwarded to the relayer unchanged; the result is the relayer's eth-side transaction hash. Relayer error codes and messages pass through verbatim. Only legacy type-0 transactions are accepted. The relayer rejects a `transfer()` aimed at the DUST address or at any color it cannot build a spend for. When no relayer is configured the method answers `-32004` with reason `write path not configured`.
+- **Behaviour** The payload is forwarded to the configured relayer unchanged and the relayer's 32-byte hash is returned. Relayer error codes and messages pass through verbatim. The payload format, its validation and what the relayer does with it are outside this specification; the relayer's only obligation to this surface is to record the returned hash against the resulting Midnight transaction in the transaction index. When no relayer is configured the method answers `-32004` with reason `write path not configured`.
 - **Errors** `-32602` for a missing or non-string parameter.
-- **Wallet use** The wallet's Send. Success means accepted for relaying, not mined; proving follows, and the wallet observes the outcome through `eth_getTransactionByHash` and `eth_getTransactionReceipt`.
+- **Wallet use** The wallet's Send. Success means the relayer accepted the payload; the wallet observes the outcome through `eth_getTransactionByHash` and `eth_getTransactionReceipt` with the returned hash.
 
 ### midnight_getTokenBalances
 
@@ -348,7 +348,7 @@ Methods a dapp sends to the wallet extension. They never reach this surface, but
 | `eth_requestAccounts` | address[] | The wallet returns the user's selected account after the connect prompt. | None. |
 | `wallet_addEthereumChain`, `wallet_switchEthereumChain` | null | The wallet stores chain 6201837 with the RPC URL and `nativeCurrency { name: NIGHT, symbol: NIGHT, decimals: 18 }`, then switches to it. | Wallets require 18 decimals for the native currency, which fixes the 10^12 scale. A companion page switches chains before adding tokens. |
 | `wallet_watchAsset` (EIP-747) | boolean | The wallet prompts once per asset, `{ type: "ERC20", options: { address, symbol, decimals, image } }` or ERC721/ERC1155 with `tokenId`, and remembers it for that account and network. | The only path that adds tokens without manual entry on a custom chain. Wallets verify `symbol()` and `decimals()` through `eth_call` and reject a mismatch, which is why the token manifest is the single metadata source. Symbols are at most 5 characters. |
-| `personal_sign`, `eth_signTypedData_v4` | DATA signature | The wallet signs with the user's key. | Signed payloads go to the relayer, whose eth-keyed circuits carry the signer's 20-byte address zero-padded into the 32-byte identity. |
+| `personal_sign`, `eth_signTypedData_v4` | DATA signature | The wallet signs with the user's key. | Signed payloads are consumed by the relayer; outside this specification. |
 
 ## Conformance checks
 
@@ -357,10 +357,10 @@ An implementation conforms when every statement below holds against a running st
 1. A wallet adds the network with chain id 6201837, native currency NIGHT at 18 decimals, and connects without a currency-symbol or chain-id warning; `eth_chainId` answers `0x5EA1ED` and `net_version` `"6201837"`.
 2. For a registered identity holding *n* STAR of NIGHT, `eth_getBalance` answers *n* × 10^12 as a QUANTITY; for an unregistered address it answers `0x0`.
 3. Pasting any registered token address into the wallet's custom-token form fills symbol and decimals from `eth_call`, and the shown balance equals the store or ledger-state balance for that kind.
-4. The DUST address answers `symbol()` = `DUST`, `decimals()` = 15, and a `balanceOf` that changes between two calls a minute apart for a generating account; a `transfer()` to it is rejected by the relayer with an error code the wallet displays.
+4. The DUST address answers `symbol()` = `DUST`, `decimals()` = 15, and a `balanceOf` that changes between two calls a minute apart for a generating account.
 5. A color minted both shielded and unshielded appears as two token addresses; the unshielded one answers a balance, the shielded one answers `0x` for `balanceOf` on the shared surface.
 6. A contract minting two colors yields Transfer logs under two distinct `address` values, neither equal to the contract's own address, and `midnight_getTokenBalances` lists them separately.
-7. A legacy transaction sent through `eth_sendRawTransaction` becomes visible through `eth_getTransactionByHash` and `eth_getTransactionReceipt` under the hash the wallet computed, with `status 0x1`, a non-empty `logs` array and a `logsBloom` that matches those logs.
+7. A payload the configured relayer accepts through `eth_sendRawTransaction` becomes visible through `eth_getTransactionByHash` and `eth_getTransactionReceipt` under the hash the relayer returned, with a `logsBloom` that matches the receipt's `logs`.
 8. Every spec-defined method not listed as served answers `-32004` with a `data.classification`; an invented name answers `-32601`; `rpc.discover` lists exactly the served methods.
 9. An `eth_getLogs` filter matching more than 10 000 rows answers `-32005`; a filter over an empty range answers `[]`.
 10. A library's WebSocket provider connects to port 10021, reads `eth_chainId` on that connection, and receives a `newHeads` notification for the next indexed block.
