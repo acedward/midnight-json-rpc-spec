@@ -32,13 +32,13 @@ The surface is not an Ethereum node. There is no EVM execution, no storage trie 
 
 Midnight identities are 32 bytes; EVM addresses are 20. Every EVM address the surface answers for is derived by one of five rules and recorded in the registry with its kind. The registry is the discriminator: every read dispatches on the kind of the address it was asked about, never on the shape of the address.
 
-| Kind | Derivation | Registry kind | Rules |
-|---|---|---|---|
-| **Midnight user identity** | `keccak256(identity)[12:32]` of the 32-byte identity | `midnight` | Registered at first sighting. `eth_getCode` answers `0x`. |
-| **Ethereum-native identity** | The 20 bytes verbatim. On the Midnight side such an identity travels as the address zero-left-padded to 32 bytes; a 32-byte identity whose first 12 bytes are zero is read as this kind | `ethereum` | The embedding is lossless. Midnight-side balances are attributed to an Ethereum-native account only through a registry binding to a Midnight identity; how bindings are established is outside this specification. |
-| **Compact contract** | `keccak256(contractAddress)[12:32]` of the 32-byte contract address | `contract` | The contract's EVM address is the ERC-20 address for balances the contract manages in its own ledger state. It is also the holder address for value the contract owns. |
-| **Token color** | `keccak256("midnight-evm:token:" ‖ tag ‖ raw)[12:32]`, where `raw` is the 32-byte token type and `tag` is the ASCII pool tag, `unshielded` or `shielded` | `token-unshielded`, `token-shielded` | A raw color is the same value in both pools; the tag distinguishes them, so it is part of the derivation. A color minted shielded and unshielded is two ERC-20s. A contract minting two colors is two ERC-20s, neither of which is the contract's own address. |
-| **Protocol asset** | A fixed constant. **DUST** is `0x1111111111111111111111111111111111111111` | `protocol` | DUST has no raw color, so a constant is the only possible address. Further protocol assets take further constants of the same form. |
+| Kind | Derivation · registry kind | Rules |
+|---|---|---|
+| **Midnight user identity** | `keccak256(identity)[12:32]` · `midnight` | Registered at first sighting. `eth_getCode` is `0x`. |
+| **Ethereum-native identity** | The 20 bytes verbatim; on the Midnight side, the address zero-left-padded to 32 bytes · `ethereum` | A 32-byte identity with 12 leading zero bytes is read as this kind. Midnight-side balances attach only through a binding to a Midnight identity; how bindings are established is out of scope. |
+| **Compact contract** | `keccak256(contractAddress)[12:32]` · `contract` | The ERC-20 address for balances the contract manages in its ledger, and the holder address for value the contract owns. |
+| **Token color** | `keccak256("midnight-evm:token:" ‖ tag ‖ raw)[12:32]`, `tag` = `unshielded` or `shielded` · `token-unshielded`, `token-shielded` | The raw color is identical in both pools; the tag makes two addresses. A contract minting two colors yields two ERC-20s, neither the contract's own address. |
+| **Protocol asset** | Fixed constant; DUST is `0x1111111111111111111111111111111111111111` · `protocol` | DUST has no raw color. Further protocol assets take further constants. |
 
 **Registry rules.** The registry is unique on EVM address. Two identities deriving the same address is a hard error that aborts the write; it is never a merge. Every kind other than `midnight` and `ethereum` answers the code marker in `eth_getCode`. Token metadata comes from the token manifest.
 
@@ -111,7 +111,7 @@ One row per method. **Result** is the JSON-RPC result type, using the encodings 
 | Endpoint | Result | Midnight data |
 |---|---|---|
 | [`eth_getTransactionByHash`](ENDPOINTS-DETAILS.md#eth_gettransactionbyhash) | Transaction \| null | Transaction-index row: sender, recipient, sent-count nonce; indexer block containing the Midnight hash for position |
-| [`eth_getTransactionReceipt`](ENDPOINTS-DETAILS.md#eth_gettransactionreceipt) | Receipt \| null | Indexer transaction result, segment results and fee; log-store rows keyed by the Midnight hash |
+| [`eth_getTransactionReceipt`](ENDPOINTS-DETAILS.md#eth_gettransactionreceipt) | Receipt \| null | Indexer transaction result, segment results and fee; derived logs keyed by the Midnight hash |
 | [`eth_getTransactionByBlockHashAndIndex`](ENDPOINTS-DETAILS.md#eth_gettransactionbyblockhashandindex) | Transaction \| null | Indexer block transaction list at the index; transaction-index row for sender, recipient and nonce |
 | [`eth_getTransactionByBlockNumberAndIndex`](ENDPOINTS-DETAILS.md#eth_gettransactionbyblocknumberandindex) | Transaction \| null | Same, by tag |
 
@@ -120,7 +120,7 @@ One row per method. **Result** is the JSON-RPC result type, using the encodings 
 | Endpoint | Result | Midnight data |
 |---|---|---|
 | [`eth_getLogs`](ENDPOINTS-DETAILS.md#eth_getlogs) | Log[] | Derived logs: paired unshielded Spend/Receive contract events as `Transfer`, unpaired ones as mint or burn, every other event type under its `Midnight<Type>()` topic |
-| [`eth_subscribe`](ENDPOINTS-DETAILS.md#eth_subscribe) (WebSocket) | QUANTITY subscription id | `logs`: log-store rows as they commit; `newHeads`: indexer head |
+| [`eth_subscribe`](ENDPOINTS-DETAILS.md#eth_subscribe) (WebSocket) | QUANTITY subscription id | `logs`: derived logs as they commit; `newHeads`: indexer head |
 | [`eth_unsubscribe`](ENDPOINTS-DETAILS.md#eth_unsubscribe) (WebSocket) | boolean | Subscription table |
 
 ### Write path and discovery
